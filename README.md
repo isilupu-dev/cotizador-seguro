@@ -59,6 +59,7 @@ POST /api/v1/cotizaciones
 ```
 
 Cotiza un seguro enviando un CotizacionRequest:
+```
 {
   "marca": "Toyota",
   "modelo": "Corolla",
@@ -66,8 +67,10 @@ Cotiza un seguro enviando un CotizacionRequest:
   "tipoUso": "familiar",
   "edadConductor": 23
 }
+```
 
 Respuesta:
+```
 {
   "primaBase": 500,
   "ajustes": [
@@ -79,5 +82,5 @@ Respuesta:
   ],
   "primaTotal": 575
 }
-
+```
 ⚠️ Si una solicitud se repite con los mismos datos en menos de 5 minutos, se responderá desde Redis (caché).
