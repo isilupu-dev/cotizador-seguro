@@ -28,25 +28,35 @@ API reactiva desarrollada con Java y Spring WebFlux para cotizar seguros vehicul
 - Docker Compose instalado
 
 ### 2. Clona el repositorio
+```
 git clone https://github.com/isilupu-dev/cotizador-seguro.git
 cd cotizador-seguro
+```
 
 ### 3. Levantar la solución con Docker Compose
+```
 docker-compose up --build
+```
 
 Esto levantará:
-La API (http://localhost:8080)
-MongoDB (localhost:27018)
-Redis (localhost:6380)
+- La API (http://localhost:8080)
+- MongoDB (localhost:27018)
+- Redis (localhost:6380)
 
 ### 4. Acceder a la aplicación
+```
 http://localhost:8080/swagger-ui.html
+```
 
 ### 5. Incluir en las solicitudes el header HTTP
+```
 x-api-key: 123456-secret
+```
 
 ### 6. Envío de solicitud
+```
 POST /api/v1/cotizaciones
+```
 
 Cotiza un seguro enviando un CotizacionRequest:
 {
