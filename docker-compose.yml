@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: cotizador-api
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATA_MONGODB_HOST: mongo
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: dbcotizaciones
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      APP_SECURITY_API_KEY: 123456-secret
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - cotizador-net
+
+  mongo:
+    container_name: mongo
+    image: mongo:7.0
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - cotizador-net
+
+  redis:
+    container_name: redis
+    image: redis:7.2
+    ports:
+      - "6380:6379"
+    networks:
+      - cotizador-net
+
+volumes:
+  mongodb_data:
+
+networks:
+  cotizador-net:
+    driver: bridge

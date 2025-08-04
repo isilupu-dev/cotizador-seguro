@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CotizacionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cotizador-seguro</a> &gt; <a href="index.source.html" class="el_package">com.mibanco.seguro.service</a> &gt; <span class="el_source">CotizacionServiceImpl.java</span></div><h1>CotizacionServiceImpl.java</h1><pre class="source lang-java linenums">package com.mibanco.seguro.service;
+
+import com.mibanco.seguro.model.Cotizacion;
+import com.mibanco.seguro.model.dto.AjusteAplicado;
+import com.mibanco.seguro.model.dto.CotizacionRequest;
+import com.mibanco.seguro.model.dto.CotizacionResponse;
+import com.mibanco.seguro.repository.CotizacionRepository;
+import com.mibanco.seguro.service.cache.CacheKeyGenerator;
+import com.mibanco.seguro.service.cache.CotizacionCacheService;
+import com.mibanco.seguro.util.TraceContext;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="fc" id="L23">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+public class CotizacionServiceImpl implements CotizacionService {
+
+    private final CotizacionRepository cotizacionRepository;
+    private final CotizacionCacheService cotizacionCacheService;
+    private final CacheKeyGenerator cacheKeyGenerator;
+
+<span class="fc" id="L32">    private static final BigDecimal PRIMA_BASE = BigDecimal.valueOf(500);</span>
+
+    @Override
+    public Mono&lt;CotizacionResponse&gt; cotizar(CotizacionRequest request) {
+<span class="fc" id="L36">        return TraceContext.getTraceId()</span>
+<span class="fc" id="L37">                .flatMap(traceId -&gt; {</span>
+<span class="fc" id="L38">                    log.info(&quot;[{}] Iniciando cotización para: {}&quot;, traceId, request);</span>
+<span class="fc" id="L39">			        String cacheKey = cacheKeyGenerator.generarClaveCotizacion(request);</span>
+			
+<span class="fc" id="L41">			        return cotizacionCacheService.getCotizacion(cacheKey)</span>
+<span class="fc" id="L42">			        		.doOnNext(resp -&gt; log.info(&quot;[{}] Cotización encontrada en cache&quot;, traceId))</span>
+<span class="fc" id="L43">			                .switchIfEmpty(Mono.defer(() -&gt; {</span>
+<span class="fc" id="L44">			                	log.info(&quot;[{}] Cotización no encontrada en cache, calculando...&quot;, traceId);</span>
+<span class="fc" id="L45">		                        return calcularYGuardar(request, cacheKey, traceId);</span>
+			                }));
+                });
+    }
+
+    private Mono&lt;CotizacionResponse&gt; calcularYGuardar(CotizacionRequest request, String cacheKey, String traceId ) {
+<span class="fc" id="L51">        CotizacionResponse response = calcularCotizacion(request);</span>
+<span class="fc" id="L52">        Cotizacion entidad = mapToEntity(request, response);</span>
+
+<span class="fc" id="L54">        return cotizacionRepository.save(entidad)</span>
+<span class="fc" id="L55">                .doOnSuccess(v -&gt; log.info(&quot;[{}] Cotización guardada en MongoDB&quot;, traceId))</span>
+<span class="fc" id="L56">                .then(cotizacionCacheService.saveCotizacion(cacheKey, response))</span>
+<span class="fc" id="L57">                .doOnSuccess(v -&gt; log.info(&quot;[{}] Cotización guardada en Redis con TTL de 5 minutos&quot;, traceId))</span>
+<span class="fc" id="L58">                .thenReturn(response);</span>
+    }
+
+    private CotizacionResponse calcularCotizacion(CotizacionRequest request) {
+<span class="fc" id="L62">        List&lt;AjusteAplicado&gt; ajustes = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        if (request.anio() &gt; 2015) {</span>
+<span class="fc" id="L65">            ajustes.add(ajuste(&quot;Vehiculo posterior a 2015&quot;, BigDecimal.valueOf(0.15)));</span>
+        }
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        if (&quot;carga&quot;.equalsIgnoreCase(request.tipoUso())) {</span>
+<span class="fc" id="L68">            ajustes.add(ajuste(&quot;Uso tipo carga&quot;, BigDecimal.valueOf(0.10)));</span>
+        }
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (request.edadConductor() &gt; 50) {</span>
+<span class="fc" id="L71">            ajustes.add(ajuste(&quot;Conductor mayor de 50 años&quot;, BigDecimal.valueOf(-0.05)));</span>
+        }
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        if (&quot;bmw&quot;.equalsIgnoreCase(request.marca())) {</span>
+<span class="fc" id="L74">            ajustes.add(ajuste(&quot;Marca BMW&quot;, BigDecimal.valueOf(0.20)));</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        } else if (&quot;audi&quot;.equalsIgnoreCase(request.marca())) {</span>
+<span class="fc" id="L76">            ajustes.add(ajuste(&quot;Marca Audi&quot;, BigDecimal.valueOf(0.10)));</span>
+        }
+
+<span class="fc" id="L79">        BigDecimal totalAjustes = ajustes.stream()</span>
+<span class="fc" id="L80">                .map(AjusteAplicado::monto)</span>
+<span class="fc" id="L81">                .reduce(BigDecimal.ZERO, BigDecimal::add);</span>
+
+<span class="fc" id="L83">        BigDecimal primaTotal = PRIMA_BASE.add(totalAjustes).setScale(2, RoundingMode.HALF_UP);</span>
+
+<span class="fc" id="L85">        return new CotizacionResponse(</span>
+<span class="fc" id="L86">                PRIMA_BASE.setScale(2, RoundingMode.HALF_UP),</span>
+                ajustes,
+                primaTotal
+        );
+    }
+
+    private AjusteAplicado ajuste(String motivo, BigDecimal porcentaje) {
+<span class="fc" id="L93">        BigDecimal monto = PRIMA_BASE.multiply(porcentaje);</span>
+<span class="fc" id="L94">        return new AjusteAplicado(motivo, porcentaje, monto);</span>
+    }
+
+    private Cotizacion mapToEntity(CotizacionRequest request, CotizacionResponse response) {
+<span class="fc" id="L98">        return Cotizacion.builder()</span>
+<span class="fc" id="L99">                .marca(request.marca())</span>
+<span class="fc" id="L100">                .modelo(request.modelo())</span>
+<span class="fc" id="L101">                .anio(request.anio())</span>
+<span class="fc" id="L102">                .tipoUso(request.tipoUso())</span>
+<span class="fc" id="L103">                .edadConductor(request.edadConductor())</span>
+<span class="fc" id="L104">                .primabase(response.primaBase())</span>
+<span class="fc" id="L105">                .ajustes(response.ajustes())</span>
+<span class="fc" id="L106">                .primaTotal(response.primaTotal())</span>
+<span class="fc" id="L107">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

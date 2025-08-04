@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: cotizador-seguro
+
+  data:
+    mongodb:
+      host: ${SPRING_DATA_MONGODB_HOST:localhost}
+      port: ${SPRING_DATA_MONGODB_PORT:27017}
+      database: ${SPRING_DATA_MONGODB_DATABASE:dbcotizaciones}
+
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+      repositories:
+        enabled: false
+
+app:
+  security:
+    api-key: ${APP_SECURITY_API_KEY:123456-secret}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

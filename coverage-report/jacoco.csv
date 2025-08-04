@@ -1,0 +1,16 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+cotizador-seguro,com.mibanco.seguro.router,CotizacionRouter,0,12,0,0,0,2,0,2,0,2
+cotizador-seguro,com.mibanco.seguro.service.cache,CacheKeyGenerator,0,36,0,0,0,7,0,2,0,2
+cotizador-seguro,com.mibanco.seguro.service.cache,RedisCotizacionCacheServiceImpl,0,18,0,0,0,3,0,3,0,3
+cotizador-seguro,com.mibanco.seguro.model.dto,CotizacionRequest,0,18,0,0,0,1,0,1,0,1
+cotizador-seguro,com.mibanco.seguro.model.dto,AjusteAplicado,0,12,0,0,0,1,0,1,0,1
+cotizador-seguro,com.mibanco.seguro.model.dto,CotizacionResponse,0,12,0,0,0,1,0,1,0,1
+cotizador-seguro,com.mibanco.seguro.security,ApiKeyAuthFilter,55,3,14,0,12,1,8,1,1,1
+cotizador-seguro,com.mibanco.seguro.config,TraceIdWebFilter,11,3,0,0,3,1,1,1,1,1
+cotizador-seguro,com.mibanco.seguro.config,RedisConfig,0,20,0,0,0,6,0,2,0,2
+cotizador-seguro,com.mibanco.seguro.config,SecurityConfig,0,48,0,0,0,10,0,3,0,3
+cotizador-seguro,com.mibanco.seguro.config,OpenApiConfig,0,38,0,0,0,12,0,2,0,2
+cotizador-seguro,com.mibanco.seguro.service,CotizacionServiceImpl,0,225,0,10,0,47,0,16,0,11
+cotizador-seguro,com.mibanco.seguro.handler,CotizacionHandler,116,4,2,0,23,1,9,1,8,1
+cotizador-seguro,com.mibanco.seguro.util,TraceContext,8,13,1,1,1,2,2,3,1,3
+cotizador-seguro,com.mibanco.seguro,CotizadorSeguroApplication,5,3,0,0,2,1,1,1,1,1
